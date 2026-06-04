@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Office Printer Priority System</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --google-blue: #4285F4;
+            --google-red: #DB4437;
+            --google-yellow: #F4B400;
+            --google-green: #0F9D58;
+            --light-gray: #f2f2f2;
+            --dark-gray: #5f6368;
+        }
+        
+        body {
+            font-family: 'Google Sans', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #202124;
+            background-color: #f8f9fa;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+        
+        .logo {
+            font-size: 22px;
+            font-weight: 500;
+            margin-right: 20px;
+            color: var(--google-blue);
+        }
+        
+        .logo i {
+            margin-right: 10px;
+            color: var(--google-blue);
+        }
+        
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .card-header {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            color: var(--dark-gray);
+            display: flex;
+            align-items: center;
+        }
+        
+        .card-header i {
+            margin-right: 10px;
+            color: var(--google-blue);
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: var(--dark-gray);
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .btn {
+            background-color: var(--google-blue);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: #3367d6;
+        }
+        
+        .queue-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.2s;
+        }
+        
+        .queue-item:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .priority-indicator {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .priority-1 { background-color: #DB4437; } /* CEO */
+        .priority-2 { background-color: #F4B400; } /* Director */
+        .priority-3 { background-color: #4285F4; } /* Manager */
+        .priority-4 { background-color: #0F9D58; } /* Team Lead */
+        .priority-5 { background-color: #673AB7; } /* Senior Employee */
+        .priority-6 { background-color: #3949AB; } /* Regular Employee */
+        .priority-7 { background-color: #5f6368; } /* Intern */
+        
+        .job-details {
+            flex-grow: 1;
+        }
+        
+        .job-name {
+            font-weight: 500;
+        }
+        
+        .job-position {
+            font-size: 14px;
+            color: var(--dark-gray);
+        }
+        
+        .job-file {
+            font-size: 14px;
+            color: var(--google-blue);
+        }
+        
+        .flash-message {
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        
+        .flash-success {
+            background-color: #e6f4ea;
+            color: #0f9d58;
+            border: 1px solid #0f9d58;
+        }
+        
+        .flash-error {
+            background-color: #fce8e6;
+            color: #db4437;
+            border: 1px solid #db4437;
+        }
+        
+        .current-print-job {
+            background-color: #e8f0fe;
+            border-left: 4px solid var(--google-blue);
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        
+        .current-print-job .status {
+            font-weight: 500;
+            color: var(--google-blue);
+            margin-bottom: 5px;
+        }
+        
+        .printer-status {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .status-active {
+            background-color: var(--google-green);
+            animation: blink 1.5s infinite;
+        }
+        
+        .status-idle {
+            background-color: var(--dark-gray);
+        }
+        
+        .status-error {
+            background-color: var(--google-red);
+        }
+        
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .history-table th, .history-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .history-table th {
+            background-color: #f5f5f5;
+            font-weight: 500;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: var(--dark-gray);
+        }
+        
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 10px;
+            color: #dadce0;
+        }
+        
+        @keyframes blink {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
+        
+        @media (max-width: 768px) {
+            .grid-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <i class="fas fa-print"></i> Google Office Printer Priority System
+            </div>
+        </div>
+        
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <div class="grid-container">
+            <div>
+                <!-- Submit Print Job -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-file-upload"></i> Submit New Print Job
+                    </div>
+                    <form action="{{ url_for('submit_job') }}" method="post">
+                        <div class="form-group">
+                            <label for="name">Your Name</label>
+                            <input type="text" id="name" name="name" required placeholder="Enter your full name">
+                        </div>
+                        <div class="form-group">
+                            <label for="position">Position/Role</label>
+                            <select id="position" name="position" required>
+                                <option value="" disabled selected>Select your position</option>
+                                {% for position, level in priority_levels %}
+                                    <option value="{{ position }}">{{ position }} (Priority {{ level }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="file_name">Document Name</label>
+                            <input type="text" id="file_name" name="file_name" required placeholder="e.g. Q2 Report.pdf">
+                        </div>
+                        <button type="submit" class="btn">Submit Print Job</button>
+                    </form>
+                </div>
+                
+                <!-- Current Print Job -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-print"></i> Printer Status
+                    </div>
+                    <div id="printer-status-container">
+                        {% if is_printing and current_job %}
+                            <div class="current-print-job">
+                                <div class="status">
+                                    <span class="printer-status status-active"></span> Currently Printing
+                                </div>
+                                <div class="job-name">{{ current_job[3] }}</div>
+                                <div class="job-position">{{ current_job[5] }}</div>
+                                <div class="job-file">File: {{ current_job[4] }}</div>
+                                <div style="margin-top: 10px;">
+                                    <button id="finish-job" class="btn">Complete Job</button>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="fas fa-coffee"></i>
+                                <p>Printer is idle. No active print jobs.</p>
+                                {% if queue|length > 0 %}
+                                    <button id="start-printing" class="btn">Start Next Job</button>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div>
+                <!-- Print Queue -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-tasks"></i> Print Queue
+                        <span style="margin-left: 10px; font-size: 14px; color: #5f6368;">({{ queue|length }} jobs waiting)</span>
+                    </div>
+                    <div id="queue-container">
+                        {% if queue|length > 0 %}
+                            {% for job in queue %}
+                                <div class="queue-item">
+                                    <div class="priority-indicator priority-{{ job[0] }}">{{ job[0] }}</div>
+                                    <div class="job-details">
+                                        <div class="job-name">{{ job[3] }}</div>
+                                        <div class="job-position">{{ job[5] }}</div>
+                                        <div class="job-file">{{ job[4] }}</div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="fas fa-check-circle"></i>
+                                <p>Queue is empty. No pending print jobs.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Print History -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-history"></i> Recent Print Jobs
+                    </div>
+                    <div id="history-container">
+                        {% if job_history|length > 0 %}
+                            <table class="history-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Position</th>
+                                        <th>Document</th>
+                                        <th>Completed</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for job in job_history %}
+                                        <tr>
+                                            <td>{{ job[3] }}</td>
+                                            <td>{{ job[5] }}</td>
+                                            <td>{{ job[4] }}</td>
+                                            <td>{{ job[6] }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="fas fa-folder-open"></i>
+                                <p>No print history available yet.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+$(document).ready(function() {
+
+    // Handle start printing button
+    $(document).on('click', '#start-printing', function() {
+        $.get('/start_printing', function(data) {
+            if (data.status === 'started') {
+                location.reload();
+            }
+        });
+    });
+
+    // Handle finish job button
+    $(document).on('click', '#finish-job', function() {
+        $.get('/finish_job', function(data) {
+            if (data.status === 'completed') {
+                location.reload();
+            }
+        });
+    });
+
+    function refreshPage() {
+        location.reload();
+    }
+
+    // Store current values from Flask/Jinja
+    const currentPrinting = JSON.parcel('{{ is_printing|tojson }}');
+    const currentQueueLength = Number('{{ queue|length }}');
+
+    // Auto refresh status every 10 seconds
+    setInterval(function() {
+
+        $.get('/queue_status', function(data) {
+
+            if (
+                data.is_printing !== currentPrinting ||
+                data.queue_length !== currentQueueLength
+            ) {
+                refreshPage();
+            }
+
+        });
+
+    }, 10000);
+
+});
+</script>
